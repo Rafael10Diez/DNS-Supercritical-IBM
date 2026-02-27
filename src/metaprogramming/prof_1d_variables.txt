@@ -1,0 +1,1 @@
+prof_1d_U_avg => U(i,j,k)

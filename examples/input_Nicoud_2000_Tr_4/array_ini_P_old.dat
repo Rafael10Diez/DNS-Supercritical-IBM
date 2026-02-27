@@ -1,0 +1,6 @@
+Binary array with format:
+
+integer[3]       ni,nj,nk                                     (12 bytes)
+double[ni*nj*nk] array[i,j,k] (in Fortran order: k -> j -> i) (8*ni*nj*nk bytes)
+
+Total array size: (12 + 8*ni*nj*nk) bytes

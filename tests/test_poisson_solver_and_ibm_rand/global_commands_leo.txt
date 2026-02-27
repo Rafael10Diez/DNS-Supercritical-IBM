@@ -1,0 +1,79 @@
+clear ; clear ; clear
+
+# --------------- modules ---------------
+work_dir=/leonardo_scratch/fast/EUHPC_E03_062/rdiezsan/jul29_tester_dns_results/DNS_multiGPU_ibm_supercritical_aug1_mpi/tests/test_poisson_solver_and_ibm_rand
+module load python/3.11.7
+cd $work_dir
+python3 mk_test_poisson_solver.py
+module load openmpi/4.1.4--nvhpc--23.1-cuda-11.8 nccl/2.14.3-1--gcc--11.3.0-cuda-11.8 nvhpc/23.1
+
+export NVHPC_HOME=/leonardo/prod/spack/03/install/0.19/linux-rhel8-icelake/gcc-8.5.0/nvhpc-23.1-x5lw6edfmfuot2ipna3wseallzl4oolm/Linux_x86_64/23.1
+export CUDA_HOME=${NVHPC_HOME}/cuda
+export NVHPC_CUDA_HOME=${CUDA_HOME}
+export MPI_HOME=${NVHPC_HOME}/comm_libs/hpcx/latest/ompi
+export NCCL_HOME=${NVHPC_HOME}/comm_libs/nccl
+export CUFFT_HOME=${NVHPC_HOME}/math_libs
+export CUTENSOR_HOME=${NVHPC_HOME}/math_libs
+export CUDACXX_HOME=${CUDA_HOME}
+
+# Optional variables
+export CUDA_CC_LIST=80
+export BUILD_FORTRAN=1
+export ENABLE_NVTX=1
+export ENABLE_NVSHMEM=0
+export NVSHMEM_HOME=${NVHPC_HOME}/comm_libs/nvshmem
+
+# this overwrites compilers and libraries like -lcufft!
+#export PATH="${MPI_HOME}/bin:$PATH"
+#export LD_LIBRARY_PATH="$CUFFT_HOME:$LD_LIBRARY_PATH"
+#export LD_LIBRARY_PATH="$CUFFT_HOME/lib64:$LD_LIBRARY_PATH"
+
+export LD_LIBRARY_PATH="$MPI_HOME:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$MPI_HOME/lib:$LD_LIBRARY_PATH"
+
+export HPCX_HOME=${NVHPC_HOME}/comm_libs/hpcx/latest
+source $HPCX_HOME/hpcx-init.sh
+
+export NCCL_LAUNCH_MODE=GROUP
+export NCCL_DEBUG=WARN
+export NCCL_SOCKET_IFNAME=enp1s0f0
+export NCCL_DEBUG_SUBSYS=INIT,ENV,GRAPH
+export UCX_RC_TIMEOUT=10s
+export NCCL_IB_TIMEOUT=20
+export NCCL_NET=IB
+
+# --------------- application directory ---------------
+cd
+cd $work_dir
+
+my_run_cleaner(){
+  rm -rf trials
+  rm -f *.mod
+  rm -f *.o
+  rm -f main.f90
+  rm -f main_poi_test
+  rm -f old_main.f90
+  rm -f *.slurm
+  rm -rf diezDecomp
+  rm -rf __pycache__
+}
+my_run_cleaner
+git clone https://github.com/Rafael10Diez/diezDecomp
+
+FC="mpif90 "
+FFLAGS=" -D_EXTRA_OUTPUT -O3  -r8 -lmpi -cudalib=cufft -acc -cpp -mcmodel=medium -L$CUFFT_HOME/lib64 "
+cp ../../src/pycode/quick_includer.py trials
+cp -f main_poi_test.f90 main.f90
+python3 trials/quick_includer.py avoid_metaprogramming
+$FC diezDecomp/src/diezdecomp_core.f90 diezDecomp/src/diezdecomp_api_generic.f90 ../../src/poisson_solver_mgpu_dtdma/poisson_solver_multigpu.f90 ../../src/diezdecomp_api_ibm.f90 main.f90 ${FFLAGS} -o main_poi_test
+export BINDING_DIR=$work_dir/../../../BINDING
+
+for my_run in $work_dir/trials/trial_*; do
+  export my_bname=$(basename $my_run)
+  export my_nproc=$(head -1 $my_run/info.dat)
+  srun -u --ntasks $my_nproc \
+          --ntasks-per-node 4 \
+          bash -c '${BINDING_DIR}/bind.sh --cpu=${BINDING_DIR}/leonardo_map.sh --mem=${BINDING_DIR}/leonardo_map.sh --ib=single  -- ./main_poi_test ${my_bname}'
+done
+
+# python3 error_checker.py

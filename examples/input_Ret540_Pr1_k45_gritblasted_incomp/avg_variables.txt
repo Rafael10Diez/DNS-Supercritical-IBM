@@ -1,0 +1,14 @@
+arr_3d_U_avg => U(i,j,k)
+arr_3d_V_avg => V(i,j,k)
+arr_3d_W_avg => W(i,j,k)
+arr_3d_T_avg => T(i,j,k)
+arr_3d_P_avg => P(i,j,k)
+
+arr_3d_UV_avg =>  0.25_dp*(U(i,j,k)+U(i+1,j,k))*(V(i,j,k)+V(i,j,k+1))
+arr_3d_UT_avg =>  0.5_dp*(U(i,j,k)+U(i+1,j,k))*T(i,j,k)
+
+arr_3d_U2_avg => U(i,j,k)**2
+arr_3d_V2_avg => V(i,j,k)**2
+arr_3d_W2_avg => W(i,j,k)**2
+arr_3d_T2_avg => T(i,j,k)**2
+

@@ -1,0 +1,23 @@
+! ------------------- To be filled by the user (or automatically by Python) -------------------
+
+! ------------------- Format is -------------------
+
+! enth_arr(i,j,k)         = ... T_ext_ijk ...
+! rho_arr(i,j,k)          = ... T_ext_ijk ...
+! mu_arr(i,j,k)           = ... T_ext_ijk ...
+! cond_arr(i,j,k)         = ... T_ext_ijk ...
+! buoyancy_arr(i,j,k)     = ... T_ext_ijk ...
+! cp_arr(i,j,k)           = ... T_ext_ijk ...
+! div_jacobian_arr(i,j,k) = ... T_ext_ijk ...
+
+! Notes: 
+!
+!  1) Nothing else is needed here. (only the expressions above)
+!
+!  2) This code is inserted inside a collapse(3) for-loop (OpenACC GPU kernel).
+!     The DNS solver determines the ijk-bounds, and the GPU/CPU execution.
+!
+!  3) For improved performance, sums and multiplications should be preferred.
+!     External dependencies on global variables might not be available (for GPUs).
+!     If splines are used, a binary tree with if-else statement is acceptable, since the 
+!     thermal properies are updated once per time step. The overhead in the DNS solver is minor.

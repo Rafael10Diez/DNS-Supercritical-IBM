@@ -1,0 +1,67 @@
+
+nx                   =     512     !  grid points in streamwise direction
+nz                   =     512     !  grid points in spanwise direction
+ny                   =     288     !  grid points in vertical direction
+
+Lx                   =      12.8   !  streamwise     length
+Lz                   =       6.4   !  spanwise       length
+Ly                   =       2.0   !  nominal channel height
+
+use_rough_surf       =       0     ! Use rough surface formulation? (integer: 0/1)
+use_rough_surf_quady  =      0     ! Use quadric rough surface? (integer, 0: ghost points, 1: quadratic upwind coeffients)
+dtmax                =       5e-5  !  time step --- 5e-5
+
+Ret                  =     180     !  Friction Reynolds number
+Pr                   =       0.76  !  Prandtl number
+
+Gb_x                 =       0 ! Buoyancy multiplier in streamwise direction (scalar, multiplies buoyancy_arr)
+Gb_z                 =       0 ! Buoyancy multiplier in spanwise direction   (scalar, multiplies buoyancy_arr)
+Gb_y                 =       0 ! Buoyancy multiplier in vertical direction   (scalar, multiplies buoyancy_arr)
+
+Sf_x                 =       1 ! Constant mean-pressure-gradient in streamwise direction
+Sf_z                 =       0 ! Constant mean-pressure-gradient in spanwise direction  
+Sq                   =       0 ! Constant volumetric heat source 
+
+nreps_x              =       1 ! Surface repetitions in x-direction (advanced, please try to use 1)
+nreps_z              =       1 ! Surface repetitions in z-direction (advanced, please try to use 1)
+
+bulk_nprint          =   10000 ! Iteration printing frequency
+
+bulk_use_target_Ub      =       0 ! Use forced bulk velocity (U_b)? (integer: 0/1)
+bulk_target_Ub          =       0 ! Forced bulk velocity value (if bulk_target_Ub=1)
+
+bulk_use_target_Reb     =       0 ! Use forced bulk Reynolds number (Re_b)? (integer: 0/1)
+bulk_target_Reb         =       0 ! Forced bulk Reynolds number (if bulk_target_Reb=1)
+
+bulk_use_rho_weighting  =       0 ! Density-weighted bulk velocity? (integer: 0/1)
+
+force_Sf_x_pressure     =       0 ! Enforce U_b (or Re_b) with mean-pressure-gradient (dPdx) along x-axis? (0/1)
+force_Sf_x_semilocal    =       0 ! Enforce U_b (or Re_b) computing dPdx using pre-averaged 1D density profiles? (0/1)
+force_Sf_x_accel        =       0 ! Enforce U_b (or Re_b) with streamwise gravity/acceleration? (0/1)
+
+filtering_first      =      50 ! Filter velocity/temperature oscillations in first iterations of DNS solver (start applying)
+filtering_steps      =     500 ! Filter velocity/temperature oscillations in first iterations of DNS solver (frequency)
+filtering_nstop      =   50000 ! Filter velocity/temperature oscillations in first iterations of DNS solver (stop iteration)
+
+avg_iter_start       =  100000 ! Iteration to start averaging
+avg_nraw             =   50000 ! Number of averaged iterations as a flat sum
+avg_freq             =       1 ! Sampling frequency for averaging
+avg_bin_nbins        =       4 ! Depth of binary tree to average arrays losing less decimal precision.
+
+snap_iter_start      =      -1 ! Iteration to start saving flow snapshots
+snap_freq            =      -1 ! Frequency to save flow snapshots
+
+use_incompressible   =       0 ! Use incompressible flow formulation?
+use_utau_work        =       0 ! Use velocity-induced work in the energy equation? (disabled feature, please leave as 0)
+
+wall_BC_T_bot        =       1 ! Bottom wall temperature
+wall_BC_T_top        =       4 ! Top wall temperature
+
+wall_BC_U_bot        =       0 ! Bottom wall x-velocity (only zero is supported for now)
+wall_BC_U_top        =       0 ! Top wall    x-velocity (only zero is supported for now)
+wall_BC_V_bot        =       0 ! Bottom wall y-velocity (only zero is supported for now)
+wall_BC_V_top        =       0 ! Top wall    y-velocity (only zero is supported for now)
+wall_BC_W_bot        =       0 ! Bottom wall z-velocity (only zero is supported for now)
+wall_BC_W_top        =       0 ! Top wall    z-velocity (only zero is supported for now)
+
+prof_1d_avg_use      =       1 ! Compute averaged 1D profiles?

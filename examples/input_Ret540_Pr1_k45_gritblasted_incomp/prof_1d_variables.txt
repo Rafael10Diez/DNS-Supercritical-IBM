@@ -1,0 +1,7 @@
+prof_1d_U_avg    =>  U(i,j,k)
+prof_1d_V_avg    =>  V(i,j,k)
+prof_1d_T_avg    =>  T(i,j,k)
+
+prof_1d_UV_avg  =>  0.25_dp*(U(i,j,k)+U(i+1,j,k))*(V(i,j,k)+V(i,j,k+1))
+prof_1d_UT_avg  =>  0.5_dp*(U(i,j,k)+U(i+1,j,k))*T(i,j,k)
+

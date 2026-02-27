@@ -1,0 +1,55 @@
+
+clear;clear;clear
+cd
+# --------------- modules ---------------
+
+module load  LUMI/24.03
+module load  partition/G
+module load  PrgEnv-cray
+module load  craype-accel-amd-gfx90a
+module load  rocm
+module load  EasyBuild-user
+
+# eb hipfort-0.4-0-cpeCray-24.03.eb -r
+module load hipfort/0.4-0-cpeCray-24.03
+
+export EBU_USER_PREFIX=/users/$USER/EasyBuild
+export HIPFORT_INSTALL_DIR=$EBU_USER_PREFIX/SW/LUMI-24.03/G/hipfort/0.4-0-cpeCray-24.03
+export HIPFORT_HOME=$HIPFORT_INSTALL_DIR/include/hipfort/amdgcn
+
+# --------------- environment variables ---------------
+export PATH=${HIPFORT_INSTALL_DIR}/bin:$PATH
+# Install HIPFort
+export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
+if [ -z "$ROCM_GPU" ]; then       echo "WARNING: ROCM_GPU=$ROCM_GPU was empty. Assigning arbitrary value. (ROCM_GPU=gfx90a is the right answer at the moment)";       ROCM_GPU=gfx90a; else       echo "SUCCESS: ROCM_GPU=$ROCM_GPU was non-empty."; fi
+echo "Final value of ROCM_GPU: " $ROCM_GPU
+
+export HIP_PLATFORM=rocclr
+export HIP_PATH=/opt/rocm-6.0.3
+export ROCM_HOME=/opt/rocm-6.0.3
+export ROCM_PATH=/opt/rocm-6.0.3
+export HIPFORT_COMPILER=/opt/cray/pe/craype/2.7.31.11/bin/ftn
+export HIP_PLATFORM=amd
+export MPICH_GPU_SUPPORT_ENABLED=1
+export MPICH_OFI_NIC_POLICY=GPU
+export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
+export OMP_PLACES=threads  
+export OMP_PROC_BIND=close  
+
+# --------------- compile hipfort ---------------
+export CRAY_ACC_DEBUG=0
+export SBATCH_ACCOUNT=project_???
+export EXTRA_AMD_FFLAGS=" --offload-arch=${ROCM_GPU} -lhipfft -lrocfft -lhipfort-amdgcn -hnoomp -hacc -hacc_model=auto_async_none:no_fast_addr -I$HIPFORT_HOME/include/hipfort/amdgcn -L$HIPFORT_HOME/lib -lhipfort-amdgcn "
+export ENABLE_AMD_GPU=1
+
+export HSA_ENABLE_SDMA=0
+export MPICH_GPU_IPC_THRESHOLD=1
+export NCCL_IGNORE_CPU_AFFINITY=1
+export NCCL_NET_GDR_LEVEL=3
+export NCCL_NCHANNELS_PER_PEER=32 
+
+# --------------- application directory ---------------
+
+root_folder_dir=/scratch/project_???/$USER/[work_folder]
+cd $root_folder_dir
+sbatch slurmjob_lumi.slurm

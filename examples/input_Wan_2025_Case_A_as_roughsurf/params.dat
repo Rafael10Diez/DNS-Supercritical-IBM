@@ -1,0 +1,67 @@
+
+nx                =  576       !  P_cells in streamwise direction
+nz                =  576       !  P_cells in spanwise direction
+ny                =  624       !  P_cells in vertical direction
+
+Lx                =  0.004     !  streamwise     length
+Lz                =  0.002     !  spanwise       length
+Ly                =  0.001     !  nominal channel height
+
+use_rough_surf        =  1
+use_rough_surf_quady  =  0
+dtmax                 =      0.0000002 !  time step --- 1e-4
+
+Ret                     =      -1                      !  Friction Reynolds number
+Pr                      =      -1                      !  Prandtl number
+
+Sf_x                    =       0
+Sf_z                    =       0
+Sq                      =       0
+
+Gb_x                    =       0
+Gb_y                    =       0
+Gb_z                    =       0
+
+nreps_x                 =       1
+nreps_z                 =       1
+
+bulk_nprint             =   10000
+
+bulk_target_Ub          =      0.396725738772274
+bulk_use_target_Ub      =       1
+
+bulk_target_Reb         =       0 ! 35000
+bulk_use_target_Reb     =       0 !     1
+
+bulk_use_rho_weighting  =       0
+
+force_Sf_x_semilocal         =       0
+force_Sf_x_pressure     =       1
+force_Sf_x_accel        =       0
+
+filtering_first         =      -1
+filtering_steps         =      -1
+filtering_nstop         =      -1
+   
+avg_iter_start          =   100000
+avg_nraw                =   32000
+avg_freq                =       1
+avg_bin_nbins           =       5
+
+snap_iter_start         =   100000 ! 100000
+snap_freq               =    5000 !  8000
+   
+use_incompressible      =       0
+use_utau_work           =       0
+
+wall_BC_T_bot           =    297.8 
+wall_BC_T_top           =    317.8 
+
+wall_BC_U_bot           =       0
+wall_BC_U_top           =       0
+wall_BC_V_bot           =       0
+wall_BC_V_top           =       0
+wall_BC_W_bot           =       0
+wall_BC_W_top           =       0
+
+prof_1d_avg_use         =       1

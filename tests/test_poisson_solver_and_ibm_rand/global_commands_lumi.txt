@@ -1,0 +1,87 @@
+
+# salloc --nodes=1 --gres=gpu:8 --ntasks=8 --account=project_465001133 --partition=standard-g --time=02:00:00
+
+clear ; clear ; clear
+
+# --------------- modules ---------------
+
+module load  LUMI/24.03
+module load  partition/G
+module load  PrgEnv-cray
+module load  craype-accel-amd-gfx90a
+module load  rocm
+module load  EasyBuild-user
+
+# eb hipfort-0.4-0-cpeCray-24.03.eb -r
+module load hipfort/0.4-0-cpeCray-24.03
+
+export EBU_USER_PREFIX=/users/$USER/EasyBuild
+export HIPFORT_INSTALL_DIR=$EBU_USER_PREFIX/SW/LUMI-24.03/G/hipfort/0.4-0-cpeCray-24.03
+export HIPFORT_HOME=$HIPFORT_INSTALL_DIR/include/hipfort/amdgcn
+
+# --------------- environment variables ---------------
+export PATH=${HIPFORT_INSTALL_DIR}/bin:$PATH
+# Install HIPFort
+export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
+if [ -z "$ROCM_GPU" ]; then       echo "WARNING: ROCM_GPU=$ROCM_GPU was empty. Assigning arbitrary value. (ROCM_GPU=gfx90a is the right answer at the moment)";       ROCM_GPU=gfx90a; else       echo "SUCCESS: ROCM_GPU=$ROCM_GPU was non-empty."; fi
+echo "Final value of ROCM_GPU: " $ROCM_GPU
+
+export HIP_PLATFORM=rocclr
+export HIP_PATH=/opt/rocm-6.0.3
+export ROCM_HOME=/opt/rocm-6.0.3
+export ROCM_PATH=/opt/rocm-6.0.3
+export HIPFORT_COMPILER=/opt/cray/pe/craype/2.7.31.11/bin/ftn
+export HIP_PLATFORM=amd
+export MPICH_GPU_SUPPORT_ENABLED=1
+export MPICH_OFI_NIC_POLICY=GPU
+export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
+export OMP_PLACES=threads  
+export OMP_PROC_BIND=close  
+
+# --------------- compile hipfort ---------------
+export CRAY_ACC_DEBUG=0
+export SBATCH_ACCOUNT=project_465001133
+export EXTRA_AMD_FFLAGS=" --offload-arch=${ROCM_GPU} -lhipfft -lrocfft -lhipfort-amdgcn -homp -hacc -hacc_model=auto_async_none -I$HIPFORT_HOME/include/hipfort/amdgcn -L$HIPFORT_HOME/lib -lhipfort-amdgcn $LIB_FLAG"
+export EXTRA_AMD_FFLAGS_NOACC=" --offload-arch=${ROCM_GPU} -lhipfft -lrocfft -lhipfort-amdgcn  -I$HIPFORT_HOME/include/hipfort/amdgcn -L$HIPFORT_HOME/lib -lhipfort-amdgcn $LIB_FLAG"
+export ENABLE_AMD_GPU=1
+
+export HSA_ENABLE_SDMA=0
+export MPICH_GPU_IPC_THRESHOLD=1
+export NCCL_IGNORE_CPU_AFFINITY=1
+export NCCL_NET_GDR_LEVEL=3
+export NCCL_NCHANNELS_PER_PEER=32 
+
+# --------------- application directory ---------------
+
+work_dir=/users/$USER/refactored_dns_solver/poisson_solver_mgpu_dtdma/test_poisson_solver
+cd $work_dir
+
+# --------------- begin: mega clean ---------------
+mega_clean() {
+    cd $work_dir
+    rm -rf $work_dir/trials
+    rm main_poi_test
+    rm poisson_solver_multigpu
+    rm select_gpu
+    rm *.out
+    rm *.slurm
+}
+mega_clean
+
+/users/$USER/miniconda3/bin/python3 mk_test_poisson_solver.py
+hipfc  -lmpi -lhipfft -O3  ${EXTRA_AMD_FFLAGS}  "-DHIPFORT_ARCH=\"amd\"" -D_USE_HIPFFT -c -o poisson_solver_multigpu  ../src/poisson_solver_mgpu_dtdma/poisson_solver_multigpu.f90
+hipfc  -lmpi -lhipfft -O3  ${EXTRA_AMD_FFLAGS}  "-DHIPFORT_ARCH=\"amd\"" -D_USE_HIPFFT -o main_poi_test  main_poi_test.f90 poisson_solver_multigpu
+chmod u+x main_poi_test
+
+# ------------------- cans compile -------------------
+
+cat << EOF > select_gpu
+#!/bin/bash
+export ROCR_VISIBLE_DEVICES=\$SLURM_LOCALID
+exec \$*
+EOF
+chmod +x ./select_gpu
+export CPU_BIND="map_cpu:49,57,17,25,1,9,33,41"
+
+sbatch job.slurm
+

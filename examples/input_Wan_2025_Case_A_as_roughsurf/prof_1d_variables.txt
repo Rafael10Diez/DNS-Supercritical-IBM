@@ -1,0 +1,2 @@
+prof_1d_T_avg => T(i,j,k)
+prof_1d_U_avg => U(i,j,k)

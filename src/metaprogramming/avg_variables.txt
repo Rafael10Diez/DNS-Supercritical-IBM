@@ -1,0 +1,5 @@
+avg_U => U(i,j,k)
+avg_V => V(i,j,k)
+avg_W => W(i,j,k)
+avg_T => T(i,j,k)
+avg_P => P(i,j,k)

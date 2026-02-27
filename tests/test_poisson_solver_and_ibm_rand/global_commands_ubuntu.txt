@@ -1,0 +1,19 @@
+
+# --------------- application directory ---------------
+clear;clear;clear
+
+git clone https://github.com/Rafael10Diez/diezDecomp
+
+FC="mpif90 "
+FFLAGS=" -g -fbacktrace -Wall -Wextra -pedantic -fcheck=all -finit-real=snan -std=f2018 -cpp -D_USE_FFTW  -I/usr/include  -lfftw3 -lmpi " # -ffpe-trap=invalid
+python3 mk_test_poisson_solver.py fftw3
+cp ../../src/pycode/quick_includer.py trials
+cp main_poi_test.f90 main.f90
+python3 trials/quick_includer.py avoid_metaprogramming
+$FC diezDecomp/src/diezdecomp_core.f90 diezDecomp/src/diezdecomp_api_generic.f90 ../../src/poisson_solver_mgpu_dtdma/poisson_solver_multigpu.f90 ../../src/diezdecomp_api_ibm.f90 main.f90 ${FFLAGS} -o main_poi_test
+
+for my_run in trials/trial_*; do
+  mpirun -n $(head -1 $my_run/info.dat) ./main_poi_test $(basename $my_run)
+done
+
+python3 error_checker.py

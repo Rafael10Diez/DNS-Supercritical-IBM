@@ -1,0 +1,58 @@
+myfolder=$PWD
+
+
+mkdir  -p   data_output
+rm    -rf   data_output/*
+echo  "" >  data_output/extended_params.dat
+
+cd $myfolder
+output_file=$myfolder/data_output/output_script.log
+echo "" > $output_file
+# python3 mk_fav_avg.py | tee -a $output_file
+python3 only_prof1d.py -D_READ_RMS | tee -a $output_file
+
+cd $myfolder/data_output
+mkdir -p    interp_2d
+mkdir -p    surfs_hxz
+mkdir -p    interp_results
+rm    -rf   interp_2d/*
+rm    -rf   surfs_hxz/*
+rm    -rf   interp_results/*
+cp -f ../../../input/rough_surf_define.f90                                                  rough_surf_define.f90 
+cp -f ../../../input/params.dat                                                             params.dat
+cp -f ../../../input/yu.txt                                                                 yu.txt
+cp -R ../../../input/fortran_surf_files                                                     fortran_surf_files
+cp -f ../../thermophysical_properties/expressions_rho_mu_cond_buoyancy_cp_div_jacobian.f90  expressions_rho_mu_cond_buoyancy_cp_div_jacobian.f90
+cp -f ../mk_extra_case_data.f90                                                             .
+cp -f ../fix_format_params_extended_and_list_avg.py                                                      .
+gfortran -fdefault-real-8 -fdefault-double-8 rough_surf_define.f90 mk_extra_case_data.f90 -o a.out 
+./a.out  | tee -a $output_file
+python3 fix_format_params_extended_and_list_avg.py  | tee -a $output_file
+
+cd $myfolder/data_output
+cp    -f    ../mk_interp_data.f90 .
+
+FC="gfortran"
+#FC="gfortran -g -fbacktrace -Wall -Wextra -pedantic -fcheck=all -finit-real=snan -ffpe-trap=invalid -std=f2008 -cpp"
+
+$FC -fdefault-real-8 -fdefault-double-8 mk_interp_data.f90 -o a.out
+
+while   read my_iter; do
+  for   my_var  in U V W T P ; do
+    for my_side in bot top  ; do
+      my_args="$my_var $my_side $my_iter"
+      echo "---------  mk_interp_data: ${my_args} ---------"     | tee -a $output_file
+      ./a.out $my_args  | tee -a $output_file
+    done
+  done
+done<iters_avg.dat
+
+cp    -f    ../mk_surf_data.f90 .
+$FC -fdefault-real-8 -fdefault-double-8 mk_surf_data.f90 -o a.out
+
+while   read my_iter; do
+  echo "--------- mk_surf_data: ${my_iter} --------- " | tee -a $output_file
+  ./a.out $my_iter | tee -a $output_file
+done<iters_avg.dat
+
+cd $myfolder
